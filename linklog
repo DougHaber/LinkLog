@@ -50,7 +50,7 @@ use warnings;
 
 my %DNS_CACHE = (); # IP to hostname cache
 my @MONTHS = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-	      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
 my @DAYS = ('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun');
 my $LOG_FD;
 
@@ -71,12 +71,12 @@ sub log_message {
     ($year2) = $year4 =~ /^\d\d(\d\d)$/; # Extract 2 digit year
 
     if (length($day) == 1) { # Pad dates with spaces to make them always 2 characters
-	$day = ' ' . $day;
+        $day = ' ' . $day;
     }
 
     # Pad 'in' with a space to keep the length the same as out
     if ($message{direction} eq 'in') {
-	$message{direction} = ' in';
+        $message{direction} = ' in';
     }
 
     # Pad Hour/Minute/Second with 0s
@@ -105,11 +105,11 @@ sub log_message {
     $template =~ s/\%z/$second/g;
 
     if ($LOG_FD) { # Write to the log file
-	print $LOG_FD "$template\n";
+        print $LOG_FD "$template\n";
     }
 
     if (! $options->{quiet}) { # Write to STDOUT
-	print "$template\n";
+        print "$template\n";
     }
 }
 
@@ -123,25 +123,25 @@ sub init_filters {
     my $filter;
 
     if ($options->{filter_protocol} !~ /^(TCP|UDP)?$/i) {
-	print STDERR "ERROR: filter_protcol: Unknown protocol\n";
-	show_usage();
+        print STDERR "ERROR: filter_protcol: Unknown protocol\n";
+        show_usage();
     }
     elsif ($options->{filter_direction} !~ /^(IN|OUT)?$/i) {
-	print STDERR "ERROR: filter_direction: Invalid direction\n";
-	show_usage();
+        print STDERR "ERROR: filter_direction: Invalid direction\n";
+        show_usage();
     }
 
     $options->{filter_protocol} = uc($options->{filter_protocol});
     $options->{filter_direction} = lc($options->{filter_direction});
 
     foreach (keys %$options) {
-	if ($_ =~ /^filter_(ip|host)/ && ($filter = $options->{$_})) {
-	    $filter = quotemeta($filter); # Protect non-word characters
-	    $filter =~ s/\\\*/.*/g; # Replace wildcards with .*
-	    $filter = "^${filter}\$"; # Add beginning/end constraints
+        if ($_ =~ /^filter_(ip|host)/ && ($filter = $options->{$_})) {
+            $filter = quotemeta($filter); # Protect non-word characters
+            $filter =~ s/\\\*/.*/g; # Replace wildcards with .*
+            $filter = "^${filter}\$"; # Add beginning/end constraints
 
-	    $options->{$_} = $filter;
-	}
+            $options->{$_} = $filter;
+        }
     }
 }
 
@@ -152,15 +152,15 @@ sub check_filter {
     my $x;
 
     if (! $filter) { # If the filter isn't set, return 0
-	return (0);
+        return (0);
     }
 
     for ($x = 1; $x <= $#_; $x++) {
-	my $value = $_[$x];
+        my $value = $_[$x];
 
-	if ($value && ($value =~ $filter)) {
-	    return (0);
-	}
+        if ($value && ($value =~ $filter)) {
+            return (0);
+        }
     }
 
     return (1);
@@ -171,14 +171,14 @@ sub filter_message {
     my ($options, %message) = @_;
 
     if (($options->{filter_direction} && ($message{direction} ne $options->{filter_direction})) ||
-	($options->{filter_protocol} && ($message{protocol} ne $options->{filter_protocol})) ||
-	check_filter($options->{filter_ip}, $message{source_ip}, $message{dest_ip}) ||
-	check_filter($options->{filter_ip_source}, $message{source_ip}) ||
-	check_filter($options->{filter_ip_dest}, $message{dest_ip}) ||
-	check_filter($options->{filter_host}, $message{source_hostname}, $message{dest_hostname}) ||
-	check_filter($options->{filter_host_source}, $message{source_hostname}) ||
-	check_filter($options->{filter_host_dest}, $message{dest_hostname})) {
-	return (1);
+        ($options->{filter_protocol} && ($message{protocol} ne $options->{filter_protocol})) ||
+        check_filter($options->{filter_ip}, $message{source_ip}, $message{dest_ip}) ||
+        check_filter($options->{filter_ip_source}, $message{source_ip}) ||
+        check_filter($options->{filter_ip_dest}, $message{dest_ip}) ||
+        check_filter($options->{filter_host}, $message{source_hostname}, $message{dest_hostname}) ||
+        check_filter($options->{filter_host_source}, $message{source_hostname}) ||
+        check_filter($options->{filter_host_dest}, $message{dest_hostname})) {
+        return (1);
     }
 
     return (0);
@@ -195,61 +195,61 @@ sub lookup_ip {
     my $host;
 
     if (! $options->{cache_dns}) {
-	return (gethostbyaddr($ip, AF_INET) || '');
+        return (gethostbyaddr($ip, AF_INET) || '');
     }
 
     # TODO: If this is to be used as a long running log, we should
     #       expire items in the cache to free up memory.
     if (defined($DNS_CACHE{$ip})) {
-	return ($DNS_CACHE{$ip});
+        return ($DNS_CACHE{$ip});
     }
     else {
-	$host = gethostbyaddr($ip, AF_INET);
+        $host = gethostbyaddr($ip, AF_INET);
     }
 
     if ($host && $host ne $ip) {
-	$DNS_CACHE{$ip} = $host;
+        $DNS_CACHE{$ip} = $host;
 
-	return ($host);
+        return ($host);
     }
     else {
-	$DNS_CACHE{$ip} = '';
+        $DNS_CACHE{$ip} = '';
 
-	return ('');
+        return ('');
     }
 }
 
 sub create_message_hash {
     # Based on the $options, create the message hash
     my ($options, $direction, $protocol, $source_host,
-	$source_ip, $source_port, $dest_host, $dest_ip, $dest_port) = @_;
+        $source_ip, $source_port, $dest_host, $dest_ip, $dest_port) = @_;
     my %message = (
-	direction => $direction,
-	protocol => $protocol,
-	source_ip => $source_ip,
-	dest_ip => $dest_ip
-	);
+        direction => $direction,
+        protocol => $protocol,
+        source_ip => $source_ip,
+        dest_ip => $dest_ip
+        );
 
     # If a filter requires DNS, or it isn't disabled, lookup IP addresses
     if ($options->{filter_host} || $options->{filter_host_source} ||
-	! $options->{no_dns} || ! $options->{no_dns_source}) {
-	$message{source_hostname} = ($source_host || lookup_ip($options, $source_ip));
+        ! $options->{no_dns} || ! $options->{no_dns_source}) {
+        $message{source_hostname} = ($source_host || lookup_ip($options, $source_ip));
     }
 
     if ($options->{filter_host} || $options->{filter_host_dest} ||
-	! $options->{no_dns} || ! $options->{no_dns_dest}) {
-	$message{dest_hostname} = ($dest_host || lookup_ip($options, $dest_ip));
+        ! $options->{no_dns} || ! $options->{no_dns_dest}) {
+        $message{dest_hostname} = ($dest_host || lookup_ip($options, $dest_ip));
     }
 
     # Setup the host names for display, unless showing IPs is enabled
     if (! $options->{no_dns}) {
-	if (! $options->{no_dns_source}) {
-	    $message{source_host} = $message{source_hostname};
-	}
+        if (! $options->{no_dns_source}) {
+            $message{source_host} = $message{source_hostname};
+        }
 
-	if (! $options->{no_dns_dest}) {
-	    $message{dest_host} = $message{dest_hostname};
-	}
+        if (! $options->{no_dns_dest}) {
+            $message{dest_host} = $message{dest_hostname};
+        }
     }
 
     # Set the displayed host to the IP, if it isn't set to a name
@@ -258,8 +258,8 @@ sub create_message_hash {
 
     # Setup the ports for display
     if (! $options->{show_port_numbers}) {
-	$message{source_port} = getservbyport($source_port, lc($protocol)) || $source_port;
-	$message{dest_port} = getservbyport($dest_port, lc($protocol)) || $dest_port;
+        $message{source_port} = getservbyport($source_port, lc($protocol)) || $source_port;
+        $message{dest_port} = getservbyport($dest_port, lc($protocol)) || $dest_port;
     }
 
     $message{source_port} ||= $source_port;
@@ -271,8 +271,8 @@ sub create_message_hash {
 sub parse_message {
     my ($options, $message_buffer) = @_;
     my ($direction, $protocol, undef, $source_host, $source_ip,
-	$source_port, undef, $dest_host, $dest_ip, $dest_port) =
-	$message_buffer =~ /
+        $source_port, undef, $dest_host, $dest_ip, $dest_port) =
+        $message_buffer =~ /
                    \@(in|out)                                              # Direction
                    \ (UDP|TCP)\ from\                                      # Protocol
                    (([\w\-\.]+)\()?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)? # Source IP
@@ -282,13 +282,13 @@ sub parse_message {
                    /xs;
 
     if ($direction) { # Valid messages must have a $direction
-	my %message = create_message_hash($options, $direction, $protocol, $source_host,
-					  $source_ip, $source_port, $dest_host,
-					  $dest_ip, $dest_port);
+        my %message = create_message_hash($options, $direction, $protocol, $source_host,
+                                          $source_ip, $source_port, $dest_host,
+                                          $dest_ip, $dest_port);
 
-	if (! filter_message($options, %message)) {
-	    log_message($options, %message);
-	}
+        if (! filter_message($options, %message)) {
+            log_message($options, %message);
+        }
     }
 }
 
@@ -354,63 +354,63 @@ EOF
 
 sub parse_command_line_options {
     my %options = (
-	cache_dns => 0,
-	filter_direction => '',
-	filter_ip => '',
-	filter_ip_source => '',
-	filter_ip_dest => '',
-	filter_host => '',
-	filter_host_source => '',
-	filter_host_dest => '',
-	filter_protocol => '',
-	help => 0,
-	log_file => '',
+        cache_dns => 0,
+        filter_direction => '',
+        filter_ip => '',
+        filter_ip_source => '',
+        filter_ip_dest => '',
+        filter_host => '',
+        filter_host_source => '',
+        filter_host_dest => '',
+        filter_protocol => '',
+        help => 0,
+        log_file => '',
         port => 162,
-	no_dns => 0,
-	no_dns_source => 0,
-	no_dns_dest => 0,
-	quiet => 0,
-	run_as => 'nobody',
-	show_port_numbers => 0,
-	template => '%t [%i, %p] %s:%S -> %d:%D'
-	);
+        no_dns => 0,
+        no_dns_source => 0,
+        no_dns_dest => 0,
+        quiet => 0,
+        run_as => 'nobody',
+        show_port_numbers => 0,
+        template => '%t [%i, %p] %s:%S -> %d:%D'
+        );
 
     if (! GetOptions(
-	      "cache-dns"             => \$options{cache_dns},
-	      "filter-direction=s"    => \$options{filter_direction},
-	      "filter-ip=s"           => \$options{filter_ip},
-	      "filter-ip-source=s"    => \$options{filter_ip_source},
-	      "filter-ip-dest=s"      => \$options{filter_ip_dest},
-	      "filter-host=s"         => \$options{filter_host},
-	      "filter-host-source=s"  => \$options{filter_host_source},
-	      "filter-host-dest=s"    => \$options{filter_host_dest},
-	      "filter-protocol=s"     => \$options{filter_protocol},
-  	      "help"                  => \$options{help},
-	      "log-file=s"            => \$options{log_file},
-	      "no-dns"                => \$options{no_dns},
-	      "no-dns-source"         => \$options{no_dns_source},
-	      "no-dns-dest"           => \$options{no_dns_dest},
-	      "port=i"                => \$options{port},
-	      "quiet"                 => \$options{quiet},
-	      "run-as=s"              => \$options{run_as},
-	      "show-port-numbers"     => \$options{show_port_numbers},
-	      "template=s"            => \$options{template},
-	)) {
-	show_usage();
+              "cache-dns"             => \$options{cache_dns},
+              "filter-direction=s"    => \$options{filter_direction},
+              "filter-ip=s"           => \$options{filter_ip},
+              "filter-ip-source=s"    => \$options{filter_ip_source},
+              "filter-ip-dest=s"      => \$options{filter_ip_dest},
+              "filter-host=s"         => \$options{filter_host},
+              "filter-host-source=s"  => \$options{filter_host_source},
+              "filter-host-dest=s"    => \$options{filter_host_dest},
+              "filter-protocol=s"     => \$options{filter_protocol},
+              "help"                  => \$options{help},
+              "log-file=s"            => \$options{log_file},
+              "no-dns"                => \$options{no_dns},
+              "no-dns-source"         => \$options{no_dns_source},
+              "no-dns-dest"           => \$options{no_dns_dest},
+              "port=i"                => \$options{port},
+              "quiet"                 => \$options{quiet},
+              "run-as=s"              => \$options{run_as},
+              "show-port-numbers"     => \$options{show_port_numbers},
+              "template=s"            => \$options{template},
+        )) {
+        show_usage();
     }
 
     if ($#ARGV != -1) {
-	show_usage();
+        show_usage();
     }
 
     if ($options{help}) {
-	show_usage();
+        show_usage();
     }
 
     if ($options{log_file}) {
-	if (! (open($LOG_FD, ">>", $options{log_file}))) {
-	    die("ERROR: Could not open log file for writing '$options{log_file}'\n");
-	}
+        if (! (open($LOG_FD, ">>", $options{log_file}))) {
+            die("ERROR: Could not open log file for writing '$options{log_file}'\n");
+        }
     }
 
     init_filters(\%options);
@@ -427,33 +427,33 @@ sub change_user {
     my (%options) = @_;
 
     if (getuid() == 0) {
-	my (undef, undef, $uid) = getpwnam($options{run_as});
+        my (undef, undef, $uid) = getpwnam($options{run_as});
 
-	if ($uid) {
-	    setuid($uid);
-	}
-	else {
-	    die ("ERROR: Could not set user to '$options{run_as}'.  Unknown user.\n");
-	}
+        if ($uid) {
+            setuid($uid);
+        }
+        else {
+            die ("ERROR: Could not set user to '$options{run_as}'.  Unknown user.\n");
+        }
     }
 }
 
 sub main {
     my %options = parse_command_line_options();
     my $server = IO::Socket::INET->new(
-	Proto => 'udp',
-	LocalPort => $options{port}
-	);
+        Proto => 'udp',
+        LocalPort => $options{port}
+        );
     my $message;
 
     if (! $server) {
-	die ("ERROR: UDP bind of port $options{port} failed!\n");
+        die ("ERROR: UDP bind of port $options{port} failed!\n");
     }
 
     change_user(%options);
 
     while ($server->recv($message, 1024)) {
-	parse_message(\%options, $message);
+        parse_message(\%options, $message);
     }
 }
 
@@ -462,6 +462,6 @@ main();
 END { # Cleanup
     # If the log file is open, close it
     if ($LOG_FD) {
-	close($LOG_FD);
+        close($LOG_FD);
     }
 }
